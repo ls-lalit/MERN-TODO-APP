@@ -22,7 +22,6 @@ const createTask = async (req,res) =>{
         });
     }
     catch (error) {
-        console.error("Create task error:", error);
 
         res.status(500).json({
             success: false,
@@ -42,7 +41,6 @@ const getTasks= async (req,res) =>{
         });
     }
     catch (error){
-        console.error("Get tasks error:", error);
 
         res.status(500).json({
             success: false,
@@ -70,7 +68,47 @@ const getTaskById = async (req, res) => {
             data: task
         });
     } catch (error) {
-        console.error("Get task error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+const updateTask = async (req, res) => {
+    try {
+        const { title, description, dueDate, completed } = req.body;
+
+        const task = await Task.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                user: req.userId
+            },
+            {
+                title,
+                description,
+                dueDate,
+                completed
+            },
+            {
+                new :true,
+                runValidators:true
+            }
+        );
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Task updated successfully",
+            data: task
+        });
+    } catch (error) {
 
         res.status(500).json({
             success: false,
@@ -79,8 +117,75 @@ const getTaskById = async (req, res) => {
     }
 };
 
+const deleteTask = async (req, res) => {
+    try {
+        const task = await Task.findOneAndDelete({
+            _id: req.params.id,
+            user: req.userId
+        });
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Task deleted successfully"
+        });
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+const completeTask = async (req, res) => {
+    try {
+        const task = await Task.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                user: req.userId
+            },
+            {
+                completed: true
+            },
+            {
+                new: true
+            }
+        );
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Task marked as completed",
+            data: task
+        });
+    } catch (error) {
+        console.error("Complete task error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+
 module.exports= {
     createTask,
     getTasks,
-    getTaskById
+    getTaskById,
+    updateTask,
+    deleteTask,
+    completeTask
 };
