@@ -1,27 +1,31 @@
-const Task=require("../models/Task");
-const createTask = async (req,res) =>{
-    try{
-        const {title,description,duedate} = req.body;
-        if(!title){
+const taskService = require("../services/taskService");
+
+
+const createTask = async (req, res) => {
+    try {
+        const { title, description, dueDate } = req.body;
+
+        if (!title) {
             return res.status(400).json({
                 success: false,
                 message: "Task title is required"
             });
         }
 
-        const task=await Task.create({
+        const task = await taskService.createTask({
             title,
             description,
-            duedate,
+            dueDate,
             user: req.userId
         });
+
         res.status(201).json({
             success: true,
             message: "Task created successfully",
             data: task
         });
-    }
-    catch (error) {
+    } catch (error) {
+        console.error("Create task error:", error);
 
         res.status(500).json({
             success: false,
@@ -30,31 +34,32 @@ const createTask = async (req,res) =>{
     }
 };
 
-const getTasks= async (req,res) =>{
+
+const getTasks = async (req, res) => {
     try {
-        const tasks=await Task.find({
-            user : req.userId
-        });
+        const tasks = await taskService.getTasks(req.userId);
+
         res.status(200).json({
             success: true,
             data: tasks
         });
-    }
-    catch (error){
+    } catch (error) {
+        console.error("Get tasks error:", error);
 
         res.status(500).json({
             success: false,
             message: "Internal server error"
         });
     }
-}
+};
+
 
 const getTaskById = async (req, res) => {
     try {
-        const task = await Task.findOne({
-            _id: req.params.id,
-            user: req.userId
-        });
+        const task = await taskService.getTaskById(
+            req.params.id,
+            req.userId
+        );
 
         if (!task) {
             return res.status(404).json({
@@ -68,6 +73,7 @@ const getTaskById = async (req, res) => {
             data: task
         });
     } catch (error) {
+        console.error("Get task error:", error);
 
         res.status(500).json({
             success: false,
@@ -75,24 +81,20 @@ const getTaskById = async (req, res) => {
         });
     }
 };
+
+
 const updateTask = async (req, res) => {
     try {
         const { title, description, dueDate, completed } = req.body;
 
-        const task = await Task.findOneAndUpdate(
-            {
-                _id: req.params.id,
-                user: req.userId
-            },
+        const task = await taskService.updateTask(
+            req.params.id,
+            req.userId,
             {
                 title,
                 description,
                 dueDate,
                 completed
-            },
-            {
-                new :true,
-                runValidators:true
             }
         );
 
@@ -109,6 +111,7 @@ const updateTask = async (req, res) => {
             data: task
         });
     } catch (error) {
+        console.error("Update task error:", error);
 
         res.status(500).json({
             success: false,
@@ -117,12 +120,13 @@ const updateTask = async (req, res) => {
     }
 };
 
+
 const deleteTask = async (req, res) => {
     try {
-        const task = await Task.findOneAndDelete({
-            _id: req.params.id,
-            user: req.userId
-        });
+        const task = await taskService.deleteTask(
+            req.params.id,
+            req.userId
+        );
 
         if (!task) {
             return res.status(404).json({
@@ -136,6 +140,7 @@ const deleteTask = async (req, res) => {
             message: "Task deleted successfully"
         });
     } catch (error) {
+        console.error("Delete task error:", error);
 
         res.status(500).json({
             success: false,
@@ -143,19 +148,13 @@ const deleteTask = async (req, res) => {
         });
     }
 };
+
+
 const completeTask = async (req, res) => {
     try {
-        const task = await Task.findOneAndUpdate(
-            {
-                _id: req.params.id,
-                user: req.userId
-            },
-            {
-                completed: true
-            },
-            {
-                new: true
-            }
+        const task = await taskService.completeTask(
+            req.params.id,
+            req.userId
         );
 
         if (!task) {
@@ -181,7 +180,7 @@ const completeTask = async (req, res) => {
 };
 
 
-module.exports= {
+module.exports = {
     createTask,
     getTasks,
     getTaskById,
